@@ -1,6 +1,6 @@
 /*
   Pedestrian Dead Reckoning Project
-  12 October 2025
+  Created: 12 October 2025
   Initial streaming of accelerometer, gyro and magnetometer data to the console
 */
 
@@ -15,8 +15,8 @@ void setup() {
   while (!Serial);
 
   //these lines may need to be removed later on
-  Serial.println("Started");
-  Serial.println("Timestamp, LinearX, LinearY, LinearZ, AngularX, AngularY, AngularZ, MagnetX, MagnetY, MagnetZ");
+  // Serial.println("Started");
+  // Serial.println("Timestamp, LinearX, LinearY, LinearZ, AngularX, AngularY, AngularZ, MagnetX, MagnetY, MagnetZ");
   
   if (!IMU.begin()) {
     Serial.println("Failed to initialize IMU!");
