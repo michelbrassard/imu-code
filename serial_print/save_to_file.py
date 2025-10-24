@@ -15,7 +15,7 @@ def read_serial(port, baudrate):
     
     # The Arduino IDE Serial Monitor has to be closed for this to work!
     # set timeout to 1 otherwise it writes almost every character in a new line
-    with serial.Serial(port, baudrate, timeout=1) as ser, open(f"./{datetime.now().replace(microsecond=0)}_imu_data.csv", 'w') as file:
+    with serial.Serial(port, baudrate, timeout=1) as ser, open(f"./data/{datetime.now().replace(microsecond=0)}_imu_data.csv", 'w') as file:
         try:
             file.write("Timestamp, LinearX, LinearY, LinearZ, AngularX, AngularY, AngularZ, MagnetX, MagnetY, MagnetZ\n")
             file.flush()
