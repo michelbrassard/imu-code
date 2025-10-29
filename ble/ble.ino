@@ -77,7 +77,7 @@ void setup() {
 void loop() {
   BLEDevice central = BLE.central();
   Serial.println("Looking for a central device...");
-  delay(500);
+  delay(50);
 
   if (central) {
     Serial.println("* Connected to central device!");
