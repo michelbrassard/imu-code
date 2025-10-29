@@ -14,7 +14,7 @@
 
 // UUIDs are taken from this: https://bitbucket.org/bluetooth-SIG/public/src/main/assigned_numbers/uuids/characteristic_uuids.yaml + GPT help
 #define BLE_MOTION_SERVICE_UUID "181A"
-#define BLE_ACCELERATION_CHARACTERISTIC_UUID "2D77" // left as is, not on the list
+#define BLE_ACCELERATION_CHARACTERISTIC_UUID "2D77" // left as is, not on the list (Generated)
 #define BLE_GYRO_CHARACTERISTIC_UUID "2D76" // left as is, not on the list
 #define BLE_MAGNETOMETER_CHARACTERISTIC_UUID "2AA1"
 
