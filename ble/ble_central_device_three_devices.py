@@ -6,5 +6,84 @@
 """
 
 import asyncio
-from bleak import BleakClient, BleakScanner, BleakError
 import struct
+import contextlib
+from bleak import BleakClient, BleakError, BleakScanner
+from bleak.backends.characteristic import BleakGATTCharacteristic
+
+# Determine which Arduino is which (left, right, central)
+ARDUINO_ADDRESS_UUID = "7EFA8AE7-B4F7-2803-53D0-B65EE98ECFD5" 
+
+CUSTOM_ACCELERATION_UUID = "2D77"
+CUSTOM_GYRO_UUID = "2D76"
+MAGNETOMETER_UUID = "2AA1"
+
+DEVICES = [
+    ("Right leg", "7EFA8AE7-B4F7-2803-53D0-B65EE98ECFD5"),
+    ("Left leg", "7EFA8AE7-B4F7-2803-53D0-B65EE98ECFD1"), # dummy UUIDs
+    ("Chest", "7EFA8AE7-B4F7-2803-53D0-B65EE98ECFD0") # dummy UUIDS
+]
+
+"""
+   Script for connecting 3 BLE arduinos and fetching their data
+    
+    Used: GPT + https://github.com/hbldh/bleak/blob/develop/examples/two_devices.py
+"""
+def get_characteristic_name_from_uuid(uuid): 
+    extracted_uuid_segment = uuid[4:8]
+    match extracted_uuid_segment:
+        case "2d77": 
+            return "Acceleration (m/s^2)"
+        case "2d76": 
+            return "Gyroscope (deg/s)"
+        case "2aa1": 
+            return "Magnetometer (µT)"
+        
+async def connect_to_device(uuid_address: str, device_body_position: str, lock: asyncio.Lock):
+    try:
+        async with contextlib.AsyncExitStack() as stack:
+            
+            # used because establishing a connection to multiple devices can cause errors (Don't know why yet!)
+            async with lock:
+                print(f"Looking for a device on the {device_body_position.lower()} ({uuid_address})...")
+                
+                device = await BleakScanner.find_device_by_address(uuid_address)
+                if device is None:
+                    print(f"Device on the {device_body_position.lower()} ({uuid_address}) was not found.")
+                    return
+                    
+                client = await stack.enter_async_context(BleakClient(device))
+                
+                # FROM GITHUB LINK
+                # The lock is released here. The device is still connected and the
+                # Bluetooth adapter is now free to scan and connect another device
+                # without disconnecting this one.
+                
+                def callback(characteristic: BleakGATTCharacteristic, data: bytearray) -> None:
+                    timestamp, x, y, z = struct.unpack("<Ifff", data) # < -> little endian, careful with unpack
+                    print(f"{device_body_position}: {get_characteristic_name_from_uuid(characteristic.uuid)} -> {f"Timestamp (millis): {timestamp}, X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}"}")
+            
+
+                await client.start_notify(CUSTOM_ACCELERATION_UUID, callback)
+                await client.start_notify(CUSTOM_GYRO_UUID, callback)
+                await client.start_notify(MAGNETOMETER_UUID, callback)
+                
+                # TODO Make it so that it listens until interrupt
+                await asyncio.sleep(10.0)
+                
+    except Exception as e:
+        print(f"Error with the device on the {device_body_position.lower()} ({uuid_address})")
+        print(e)
+        
+async def main():
+    lock = asyncio.Lock()
+    
+    # start multiple async functions concurrently 
+    await asyncio.gather(
+        *(
+            connect_to_device(uuid_address, device_body_position, lock) 
+            for device_body_position, uuid_address in DEVICES
+        )
+    )
+
+asyncio.run(main())
