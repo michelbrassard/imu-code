@@ -8,6 +8,9 @@
 import asyncio
 import struct
 import contextlib
+from pathlib import Path
+from datetime import datetime
+
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
@@ -36,18 +39,24 @@ def get_characteristic_name_from_uuid(uuid):
             return "Gyroscope (deg/s)"
         case "2aa1": 
             return "Magnetometer (µT)"
+
+# TODO vidi jel bolje da je to jedan file pa da je sve sinkronizirano ili 3 fiela s standardiziranim timestampom
+def store_files_to_directory(device_body_location, data):
+    output_file = Path(f"../data/{datetime.now().replace(microsecond=0)}/{device_body_location}/_imu_data.csv")
+    output_file.parent.mkdir(exist_ok=True, parents=True)
+    output_file.write_text("FOOBAR")
         
-async def connect_to_device(uuid_address: str, device_body_position: str, lock: asyncio.Lock):
+async def connect_to_device(uuid_address: str, device_body_location: str, lock: asyncio.Lock):
     try:
         async with contextlib.AsyncExitStack() as stack:
             
             # used because establishing a connection to multiple devices can cause errors (github, TODO read more)
             async with lock:
-                print(f"Looking for a device on the {device_body_position.lower()} ({uuid_address})...")
+                print(f"Looking for a device on the {device_body_location.lower()} ({uuid_address})...")
                 
                 device = await BleakScanner.find_device_by_address(uuid_address)
                 if device is None:
-                    print(f"Device on the {device_body_position.lower()} ({uuid_address}) was not found.")
+                    print(f"Device on the {device_body_location.lower()} ({uuid_address}) was not found.")
                     return
                     
                 client = await stack.enter_async_context(BleakClient(device))
@@ -55,8 +64,7 @@ async def connect_to_device(uuid_address: str, device_body_position: str, lock: 
                 
             def callback(characteristic: BleakGATTCharacteristic, data: bytearray) -> None:
                 timestamp, x, y, z = struct.unpack("<Ifff", data) # < -> little endian, careful with unpack
-                print(f"{device_body_position}: {get_characteristic_name_from_uuid(characteristic.uuid)} -> {f"Timestamp (millis): {timestamp}, X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}"}")
-            
+                print(f"{device_body_location}: {get_characteristic_name_from_uuid(characteristic.uuid)} -> {f"Timestamp (millis): {timestamp}, X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}"}")
 
             await client.start_notify(CUSTOM_ACCELERATION_UUID, callback)
             await client.start_notify(CUSTOM_GYRO_UUID, callback)
@@ -64,9 +72,9 @@ async def connect_to_device(uuid_address: str, device_body_position: str, lock: 
                 
             # TODO Make it so that it listens until interrupt
             await asyncio.sleep(10.0)
-                
+               
     except Exception as e:
-        print(f"Error with the device on the {device_body_position.lower()} ({uuid_address})")
+        print(f"Error with the device on the {device_body_location.lower()} ({uuid_address})")
         print(e)
         
 async def main():
