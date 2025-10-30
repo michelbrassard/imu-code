@@ -38,6 +38,4 @@ void loop() {
   Serial.print(linearX); Serial.print(", "); Serial.print(linearY); Serial.print(", "); Serial.print(linearZ); Serial.print(", ");
   Serial.print(angularX); Serial.print(", "); Serial.print(angularY); Serial.print(", "); Serial.print(angularZ); Serial.print(", ");
   Serial.print(magnetX); Serial.print(", "); Serial.print(magnetY); Serial.print(", "); Serial.print(magnetZ); Serial.println("");
-
-  delay(500);
 }
