@@ -6,7 +6,6 @@
 """
 
 import asyncio
-import os
 import struct
 import contextlib
 from pathlib import Path
@@ -15,9 +14,7 @@ from datetime import datetime
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 
-CUSTOM_ACCELERATION_UUID = "2D77"
-CUSTOM_GYRO_UUID = "2D76"
-MAGNETOMETER_UUID = "2AA1"
+CUSTOM_IMU_UUID = "1111"
 
 # Manually defined devices
 DEVICES = [
@@ -29,17 +26,7 @@ DEVICES = [
 """
     Script for connecting 3 BLE arduinos and fetching their data
     Used: GPT + https://github.com/hbldh/bleak/blob/develop/examples/two_devices.py
-"""
-def get_characteristic_name_from_uuid(uuid): 
-    extracted_uuid_segment = uuid[4:8]
-    match extracted_uuid_segment:
-        case "2d77": 
-            return "Acceleration (m/s^2)"
-        case "2d76": 
-            return "Gyroscope (deg/s)"
-        case "2aa1": 
-            return "Magnetometer (µT)"
-        
+""" 
 async def connect_to_device(uuid_address: str, device_body_location: str, lock: asyncio.Lock, directory_name: str):
     try:
         async with contextlib.AsyncExitStack() as stack:
@@ -59,17 +46,26 @@ async def connect_to_device(uuid_address: str, device_body_location: str, lock: 
                 output_file.parent.mkdir(exist_ok=True, parents=True)
                 output_file.write_text("Timestamp, LinearX, LinearY, LinearZ, AngularX, AngularY, AngularZ, MagnetX, MagnetY, MagnetZ")
             # release lock
-                
+            
+            initial_timestamp = 0
+            sensor_data = [] 
+            
             def callback(characteristic: BleakGATTCharacteristic, data: bytearray) -> None:
-                timestamp, x, y, z = struct.unpack("<Ifff", data) # < -> little endian, careful with unpack
-                print(f"{device_body_location}: {get_characteristic_name_from_uuid(characteristic.uuid)} -> {f"Timestamp (millis): {timestamp}, X: {x:.2f}, Y: {y:.2f}, Z: {z:.2f}"}")
-
-            await client.start_notify(CUSTOM_ACCELERATION_UUID, callback)
-            await client.start_notify(CUSTOM_GYRO_UUID, callback)
-            await client.start_notify(MAGNETOMETER_UUID, callback)
+                timestamp, ax, ay, az, gx, gy, gz, mx, my, mz = struct.unpack("<Ifffffffff", data) # < -> little endian, careful with unpack
+                if initial_timestamp == 0:
+                    initial_timestamp = timestamp
                 
-            # TODO Make it so that it listens until interrupt
-            await asyncio.sleep(10.0)
+                # TODO: Calibration
+                timestamp = timestamp - initial_timestamp
+                sensor_data.append(f"{timestamp}, {ax}, {ay}, {az}, {gx}, {gy}, {gz}, {mx}, {my}, {mz}")
+                
+            await client.start_notify(CUSTOM_IMU_UUID, callback)
+            await asyncio.sleep(10.0) # TODO listen until interrupted?
+            
+            with open(f"./data/{directory_name}/{device_body_location}_imu_data.csv", 'w') as file:
+                for line in sensor_data:
+                    file.write(line)
+                file.flush()
                
     except Exception as e:
         print(f"Error with the device on the {device_body_location.lower()} ({uuid_address})")
