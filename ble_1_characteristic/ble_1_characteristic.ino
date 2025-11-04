@@ -54,12 +54,13 @@ void setup() {
 
   Serial.print("Device Address: ");
   Serial.println(BLE.address());
+  Serial.print("Looking for a central device...");
 }
 
 void loop() {
   BLEDevice central = BLE.central();
-  Serial.println("Looking for a central device...");
-  delay(50);
+  Serial.print(".");
+  delay(10);
 
   if (central) {
     Serial.println("* Connected to central device!");
