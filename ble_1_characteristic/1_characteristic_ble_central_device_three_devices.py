@@ -21,7 +21,7 @@ CUSTOM_IMU_UUID = "1111"
 DEVICES = [
     ("right_leg", "7EFA8AE7-B4F7-2803-53D0-B65EE98ECFD5"),
     ("left_leg", "08151AAC-7425-AF47-653F-5E4D46C327F0"), 
-    ("chest", "7EFA8AE7-B4F7-2803-53D0-B65EE98ECFD0") # dummy UUID
+    ("chest", "F28584E7-DEC2-9687-B6AE-DCFB28A5157D") # dummy UUID
 ]
 
 # TODO Valja globalno gledat je li sve spojeno tako da mozda mi je to nekakav sensor_data sto trenutno imam
@@ -83,7 +83,7 @@ async def connect_to_device(uuid_address: str, device_body_location: str, lock: 
             print(f"Gathering data for {device_body_location}...")
             await asyncio.sleep(50.0) # TODO listen until interrupted?
             
-            await asyncio.sleep(60.0)
+            # await asyncio.sleep(60.0)
             
             # TODO use global data outside of the callback
             with open(f"data/{directory_name}/{device_body_location}_imu_data.csv", 'w') as file:
