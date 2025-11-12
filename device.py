@@ -70,6 +70,8 @@ class Device:
     async def collect(self, duration: int) -> None:
         def callback(characteristic: BleakGATTCharacteristic, data: bytearray) -> None:
             timestamp, ax, ay, az, gx, gy, gz, mx, my, mz = struct.unpack("<Ifffffffff", data)
+            if self.initial_timestamp == 0:
+                self.initial_timestamp = timestamp
             modified_timestamp = timestamp - self.initial_timestamp
             
             # TODO 
