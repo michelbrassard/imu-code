@@ -95,6 +95,7 @@ async def connect_to_device(uuid_address: str, device_body_location: str, lock: 
     except Exception as e:
         print(f"Error with the device on the {device_body_location.lower()} ({uuid_address})")
         print(e)
+    # TODO add a more precise exception
         
 async def main():
     lock = asyncio.Lock()
