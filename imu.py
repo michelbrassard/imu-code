@@ -1,5 +1,5 @@
 class IMU:
-    def __init__(self, timestamp, ax, ay, az, gx, gy, gz, mx, my, mz):
+    def __init__(self, timestamp, ax: float, ay: float, az: float, gx: float, gy: float, gz: float, mx: float, my: float, mz: float):
         self.timestamp = timestamp
         self.ax = ax
         self.ay = ay
