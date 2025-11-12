@@ -10,7 +10,9 @@ from imu import IMU
 
 class Device:
     
-    IDEAL_DATA_AT_REST = [] # referenca, gyro bi trebao biti 0, accel 1 za 1 direction i tako to...
+    # TODO, vidjet kako će uređaji stajati
+    # referenca, gyro bi trebao biti 0, accel 1 za 1 direction i tako to...
+    IDEAL_DATA_AT_REST = IMU(0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0) 
     
     def __init__(self, directory_name: str, body_location: str, uuid: str, lock: asyncio.Lock):
         self.uuid = uuid
@@ -63,6 +65,8 @@ class Device:
             async with contextlib.AsyncExitStack() as stack:
                 await self.client.start_notify(self.uuid, callback)
                 await asyncio.sleep(10.0)
+                
+                # TODO calculate the offset
         except Exception as e:
             print(e)
         return
@@ -74,9 +78,9 @@ class Device:
                 self.initial_timestamp = timestamp
             modified_timestamp = timestamp - self.initial_timestamp
             
-            # TODO 
-            # remove offset from the raw data
-            self.data.append(f"{modified_timestamp}, {ax}, {ay}, {az}, {gx}, {gy}, {gz}, {mx}, {my}, {mz}")
+            measured_data = IMU(modified_timestamp, ax, ay, az, gx, gy, gz, mx, my, mz)
+            calibrated_data = self.remove_offset(raw=measured_data, offset=self.offset)
+            self.data.append(calibrated_data)
         
         try: 
             async with contextlib.AsyncExitStack() as stack:
@@ -85,9 +89,9 @@ class Device:
         except Exception as e:
             print(e)
     
-    def remove_offset(raw: IMU, offset: IMU):
+    def remove_offset(raw: IMU, offset: IMU) -> IMU:
         # TODO mozda ce trebat zasebni calibration offset za svaki element pošto se malo drugačije računanju
-        return ""
+        return raw # za errore
 
     async def save_to_file(self):
         try: 
