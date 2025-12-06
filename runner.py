@@ -47,7 +47,20 @@ class Runner:
         )
     
 async def main():
-    print("hello")
+    runner = Runner()
+    lock = asyncio.Lock()
+    directory_name = datetime.now().replace(microsecond=0)
+    
+    right_leg_device = Device(directory_name, "right_leg", "7EFA8AE7-B4F7-2803-53D0-B65EE98ECFD5", lock)
+    left_leg_device = Device(directory_name, "left_leg", "08151AAC-7425-AF47-653F-5E4D46C327F0", lock)
+    chest_device = Device(directory_name, "chest", "F28584E7-DEC2-9687-B6AE-DCFB28A5157D", lock)
+    
+    runner.addAll([right_leg_device, left_leg_device, chest_device])
+    
+    await runner.connect_devices()
+    await runner.calibrate_devices()
+    await runner.collect_data(duration=10)
+    await runner.write_to_file()
 
 asyncio.run(main())
     

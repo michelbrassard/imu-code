@@ -17,6 +17,7 @@ class Device:
     def __init__(self, directory_name: str, body_location: str, uuid: str, lock: asyncio.Lock):
         self.uuid = uuid
         self.file_path = f"data/{directory_name}/{body_location}_imu_data.csv"
+        self.body_location = body_location
         
         self.lock: asyncio.Lock = lock
         self.client = None
@@ -36,15 +37,11 @@ class Device:
                 async with self.lock:
                     device = await BleakScanner.find_device_by_address(self.uuid)
                     if device is None:
-                        # TODO raise exception or just print()
+                        print(f"Device on {self.body_location} not found.")
                         return
-                        
+                    
                     self.client = await stack.enter_async_context(BleakClient(device))
                     
-                    output_file = Path(self.path)
-                    output_file.parent.mkdir(exist_ok=True, parents=True)
-                    # output_file.write_text("Timestamp, LinearX, LinearY, LinearZ, AngularX, AngularY, AngularZ, MagnetX, MagnetY, MagnetZ")
-
                     self.is_connected = True
         except Exception as e:
             # TODO add the proper exception type and handling
@@ -52,6 +49,10 @@ class Device:
             print(e)
     
     async def calibrate(self) -> None:
+        if not self.is_connected:
+            print(f"Unable to calibrate device on {self.body_location}.")
+            return
+        
         def callback(characteristic: BleakGATTCharacteristic, data: bytearray) -> None:
             timestamp, ax, ay, az, gx, gy, gz, mx, my, mz = struct.unpack("<Ifffffffff", data)
             if self.initial_timestamp == 0:
@@ -72,6 +73,10 @@ class Device:
         return
        
     async def collect(self, duration: int) -> None:
+        if not self.is_connected:
+            print(f"Unable to collect data from device on {self.body_location}.")
+            return
+        
         def callback(characteristic: BleakGATTCharacteristic, data: bytearray) -> None:
             timestamp, ax, ay, az, gx, gy, gz, mx, my, mz = struct.unpack("<Ifffffffff", data)
             if self.initial_timestamp == 0:
@@ -94,9 +99,15 @@ class Device:
         return raw # za errore
 
     async def save_to_file(self):
+        if len(self.data) == 0:
+            return
         try: 
-            with open(self.path, 'w') as file:
-                file.write("Timestamp, LinearX, LinearY, LinearZ, AngularX, AngularY, AngularZ, MagnetX, MagnetY, MagnetZ\n")
+            output_file = Path(self.file_path)
+            output_file.parent.mkdir(exist_ok=True, parents=True)
+            output_file.write_text("Timestamp, LinearX, LinearY, LinearZ, AngularX, AngularY, AngularZ, MagnetX, MagnetY, MagnetZ")
+
+            with open(self.file_path, 'w') as file:
+                file.write("Timestamp, LinearX, LinearY, LinearZ, AngularX, AngularY, AngularZ, MagnetX, MagnetY, MagnetZ")
                 for entry in self.data:
                     file.write(entry)
                 file.flush()
