@@ -15,6 +15,7 @@ class Runner:
         self.devices.extend(devices)
     
     async def connect_devices(self):
+        print("CONNECTING...")
         await asyncio.gather(
             *(
                 device.connect() 
@@ -23,6 +24,7 @@ class Runner:
         )
         
     async def calibrate_devices(self):
+        print("CALIBRATING...")
         await asyncio.gather(
             *(
                 device.calibrate() 
@@ -31,6 +33,7 @@ class Runner:
         )
     
     async def collect_data(self, duration):
+        print(f"COLLECTING DATA FOR {duration}s ...")
         await asyncio.gather(
             *(
                 device.collect(duration) 
@@ -39,6 +42,7 @@ class Runner:
         )
     
     async def write_to_file(self):
+        print("SAVING TO FILE")
         await asyncio.gather(
             *(
                 device.save_to_file() 
@@ -55,7 +59,7 @@ async def main():
     left_leg_device = Device(directory_name, "left_leg", "08151AAC-7425-AF47-653F-5E4D46C327F0", lock)
     chest_device = Device(directory_name, "chest", "F28584E7-DEC2-9687-B6AE-DCFB28A5157D", lock)
     
-    runner.addAll([right_leg_device, left_leg_device, chest_device])
+    runner.addAll([right_leg_device])
     
     await runner.connect_devices()
     await runner.calibrate_devices()
