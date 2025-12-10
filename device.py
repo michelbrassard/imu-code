@@ -81,7 +81,6 @@ class Device:
                 
         except Exception as e:
             print(e)
-        return
        
     async def collect(self, duration: int) -> None:
         if not self.is_connected:
@@ -94,7 +93,7 @@ class Device:
                 self.initial_timestamp = timestamp
             modified_timestamp = timestamp - self.initial_timestamp # kasni za jedan?
             
-            measured_data = IMU(modified_timestamp, ax, ay, az, gx, gy, gz, mx, my, mz)
+            measured_data = IMU(modified_timestamp, ax, ay, az, gx, gy, gz, mx, my, mz) # remove IMU type
             measured_data.remove_offset(self.offset)
             self.data.append(measured_data)
         
