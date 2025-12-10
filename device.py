@@ -26,7 +26,7 @@ class Device:
         self.is_connected = False
         self.is_calibrated = False
         
-        self.rest_data: list[IMU] = [] # podaci za kalibraciju
+        self.rest_data = [] # podaci za kalibraciju
         self.data: list[IMU] = []
         
         self.initial_timestamp = 0
@@ -56,7 +56,7 @@ class Device:
         
         def callback(characteristic: BleakGATTCharacteristic, data: bytearray) -> None:
             timestamp, ax, ay, az, gx, gy, gz, mx, my, mz = struct.unpack("<Ifffffffff", data)
-            measured_data = IMU(timestamp, ax, ay, az, gx, gy, gz, mx, my, mz)
+            measured_data = [timestamp, ax, ay, az, gx, gy, gz, mx, my, mz]
             self.rest_data.append(measured_data)
         
         try: 
@@ -65,11 +65,17 @@ class Device:
             await asyncio.sleep(10.0)
             await self.client.stop_notify(self.CUSTOM_IMU_UUID)
             
-            # TODO calculate the offset
-            # np_rest_data = np.array(self.rest_data)
-            # np_average_rest_data = np_rest_data.mean(axis=1)
+            # TODO vidjet je li bolje sam implementirati mean() preko IMUa da se ne koristi numpy bzvz (smanjiti overhead)
+            np_rest_data = np.array(self.rest_data)
             
-            # np_ideal_linear_angular = np_average_rest_data[:, 1:7] # linear and angular data
+            linear_data = np_rest_data[1:, 1:4]
+            linear_data_mean = linear_data.mean(axis=0)
+            linear_offset = linear_data_mean - np.round(linear_data_mean) # pronalazi gdje je 1, NIJE IDEALNO, ALI RADI ZA NAŠ SLUČAJ
+
+            gyro_data = np_rest_data[1:, 4:7]
+            gyro_offset = gyro_data.mean(axis=0)
+            
+            self.offset = IMU(0, linear_offset[0], linear_offset[1], linear_offset[2], gyro_offset[0], gyro_offset[1], gyro_offset[2], 0, 0, 0)
             
             print(f'Calibration of {self.body_location} done.')
                 
@@ -89,7 +95,7 @@ class Device:
             modified_timestamp = timestamp - self.initial_timestamp # kasni za jedan?
             
             measured_data = IMU(modified_timestamp, ax, ay, az, gx, gy, gz, mx, my, mz)
-            #calibrated_data = self.remove_offset(raw=measured_data, offset=self.offset)
+            measured_data.remove_offset(self.offset)
             self.data.append(measured_data)
         
         try: 
@@ -101,10 +107,6 @@ class Device:
             print(f'Data collection from {self.body_location} done.')
         except Exception as e:
             print(e)
-    
-    def remove_offset(raw: IMU, offset: IMU) -> IMU:
-        # TODO mozda ce trebat zasebni calibration offset za svaki element pošto se malo drugačije računanju
-        return raw # za errore
 
 
     async def save_to_file(self):
