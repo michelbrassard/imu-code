@@ -58,7 +58,6 @@ void setup() {
 
 void loop() {
   BLEDevice central = BLE.central();
-  Serial.print(".");
   delay(10);
 
   if (central) {
