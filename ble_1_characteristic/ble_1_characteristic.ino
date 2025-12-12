@@ -1,12 +1,11 @@
 /*
   Pedestrian Dead Reckoning Project
-  2 November 2025
+  5 November 2025
   Initial BLE streaming of accelerometer, gyro and magnetometer data
 
-  For now, the data is sectioned into 3 characteristics (acceleration, gyro, magnetometer)
-  Each characteristic transmits an array of 3 numbers which corresponds to the X, Y, Z data from the sensors
+  Test with 1 service and 1 characteristic
 
-  BLE MAC Address of the given arduino: d8:e6:79:3d:03:63
+  NOTE: if the arduino was off, and then power on, UPLOAD the code AGAIN
 */
 
 #include "Arduino_BMI270_BMM150.h"
@@ -59,7 +58,6 @@ void setup() {
 
 void loop() {
   BLEDevice central = BLE.central();
-  Serial.print(".");
   delay(10);
 
   if (central) {
