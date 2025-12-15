@@ -59,11 +59,11 @@ async def main():
     left_leg_device = Device(directory_name, "left_leg", "08151AAC-7425-AF47-653F-5E4D46C327F0", lock)
     chest_device = Device(directory_name, "chest", "F28584E7-DEC2-9687-B6AE-DCFB28A5157D", lock)
     
-    runner.addAll([right_leg_device])
+    runner.addAll([chest_device])
     
     await runner.connect_devices()
     await runner.calibrate_devices()
-    await runner.collect_data(duration=10)
+    await runner.collect_data(duration=120)
     await runner.write_to_file()
 
 asyncio.run(main())

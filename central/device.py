@@ -94,7 +94,7 @@ class Device:
             modified_timestamp = timestamp - self.initial_timestamp # kasni za jedan?
             
             measured_data = IMU(modified_timestamp, ax, ay, az, gx, gy, gz, mx, my, mz) # remove IMU type
-            measured_data.remove_offset(self.offset)
+            #measured_data.remove_offset(self.offset) TODO
             self.data.append(measured_data)
         
         try: 
