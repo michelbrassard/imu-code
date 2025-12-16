@@ -17,4 +17,4 @@ Code for transmitting IMU information via a serial or Bluetooth connection.
 
 ### Note
 
-For some reason, if the Arduino was powered off, and then powered on, UPLOAD the code AGAIN otherwise it won't work
+For some reason, if the Arduino was powered off, and then powered on, UPLOAD the code AGAIN otherwise it won't work.
