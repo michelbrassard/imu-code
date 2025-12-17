@@ -25,7 +25,7 @@ BLECharacteristic imuCharacteristic(BLE_IMU_DATA_CHARACTERISTIC_UUID, BLERead | 
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  //while (!Serial); // NEĆE BLE UPALIT AKO OVO STOJI, eventualno if serial...
 
   Serial.println("Started");
   
